@@ -1,0 +1,369 @@
+---
+title: "Capstone Project"
+date: "2023-06-29"
+output:
+  word_document: default
+  html_document:
+    df_print: paged
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see http://rmarkdown.rstudio.com.
+When you click the Knit button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r,warning=FALSE,message=FALSE}
+library(tidyverse)
+library(skimr)
+```
+
+
+```{r}
+df =read.csv("C:/Users/vamsh/Downloads/superstore_dataset2011-2015.csv")
+head(df)
+```
+
+### shape of the data
+```{r}
+dim(df)
+```
+
+### Structure of the data
+```{r}
+str(df)
+```
+
+### Missing values
+```{r}
+colMeans(is.na(df))
+```
+###As the Postal.COde variable has over 80% of the missing values , we will be discarding it.
+
+###Also removing columns like "Row.ID" , "Order.ID"  , "Order.Date"     "Ship.Date" ,"Customer.ID"  ,  "Customer.Name","City"  ,  "State" ,         "Country","Product.ID" and "Product.Name" that wont add any informative insights
+
+```{r}
+df = df %>% dplyr::select(-c('Postal.Code',"Row.ID" , "Order.ID"  , "Order.Date",     "Ship.Date" ,"Customer.ID"  ,  "Customer.Name","City"  ,  "State" ,   "Country","Product.ID" , "Product.Name"))
+```
+
+
+
+### Descriptive statistics 
+```{r}
+skim(df)
+```
+
+### histograms of numeric variables
+```{r,fig.width=10,fig.height=6}
+hist(df$Sales,main = "Distribution of Sales",xlab = "Sales", ylab = "Frequency")
+```
+
+```{r,fig.width=10,fig.height=6}
+hist(df$Discount,main = "Distribution of Discount",xlab = "Discount", ylab = "Frequency")
+```
+
+```{r,fig.width=10,fig.height=6}
+hist(df$Profit,main = "Distribution of Profit",xlab = "Profit", ylab = "Frequency")
+```
+
+
+```{r,fig.width=10,fig.height=6}
+hist(df$Shipping.Cost,main = "Distribution of Shipping Cost",xlab = "Shipping Cost", ylab = "Frequency")
+```
+
+### Categorical variable plots
+```{r,fig.width=10,fig.height=6}
+df_order = df %>% group_by(Order.Priority) %>% summarise(n=n())
+
+ggplot(df_order, aes(y = reorder(Order.Priority, -n), x = n,label =n)) +
+  geom_bar(stat = "identity", fill = "white") +
+  xlab("Order Priority") +
+  ylab("Count") +
+  ggtitle("Product order priority")+geom_text( size = 3,position = position_stack(vjust = 0.5)) + theme(
+    text = element_text(color = "black"),  
+    plot.title = element_text(color = "black")  
+  )
+
+```
+## From the plot we see that the maximum priroity set for the products to buy is Medium
+
+```{r,fig.width=10,fig.height=6}
+df_category = df %>% group_by(Category) %>% summarise(n=n())
+
+ggplot(df_category, aes(y = reorder(Category, -n), x = n,label =n)) +
+  geom_bar(stat = "identity", fill = "white") +
+  xlab("Category") +
+  ylab("Count") +
+  ggtitle("Product category")+geom_text( size = 3,position = position_stack(vjust = 0.5)) +theme(
+    text = element_text(color = "black"),  
+    plot.title = element_text(color = "black")  
+  )
+
+```
+##We see that most of the products brought are Office supplies
+
+```{r,fig.width=10,fig.height=6}
+df$Quantity = as.factor(df$Quantity)
+
+Quantity_percent <- df %>%
+  group_by(Quantity) %>%
+  summarise(n = n()) %>% mutate(perc = (n / sum(n))* 100)
+
+ggplot(Quantity_percent, aes(x = Quantity, y = perc)) +
+  geom_bar(stat = "identity", fill = "white") +
+  labs(x = "Quantity", y = "Percentage") +
+  ggtitle("Percentage of People buying quantities per product")+geom_text(aes(label = paste0(round(perc, 1), "%")), vjust = -0.5, size = 3) + theme(
+    text = element_text(color = "black"),  
+    plot.title = element_text(color = "black")  
+  )
+```
+##People prefer buying quantity = 2 the most 
+
+
+```{r}
+
+Region <- df %>%
+  group_by(Region) %>%
+  summarise(n = n()) %>% mutate(perc = (n / sum(n))* 100)
+
+ggplot(Region, aes(x = Region, y = perc)) +
+  geom_bar(stat = "identity", fill = "white") +
+  labs(x = "Region", y = "Percentage") +coord_flip()+
+  ggtitle("Percentage of Region")+geom_text(aes(label = paste0(round(perc, 1), "%")), vjust = -0.5, size = 3) + theme(
+    text = element_text(color = "black"),  
+    plot.title = element_text(color = "black")  
+  )
+```
+
+### Scatterplots
+
+```{r}
+ggplot(df, aes(Profit, Sales))+ geom_point()+ xlab("Profit") +
+  ylab("Sales") +
+  ggtitle("Profit vs Sales") +
+  theme_minimal()
+```
+
+```{r}
+ggplot(df, aes(Sales, Shipping.Cost))+ geom_point()+ xlab("Sales") +
+  ylab("ShippingCost") +
+  ggtitle("Sales vs ShippingCost") +
+  theme_minimal()
+```
+
+```{r}
+ggplot(df, aes(Profit, Shipping.Cost))+ geom_point()+ xlab("Profit") +
+  ylab("Shipping.Cost") +
+  ggtitle("Profit vs Shipping.Cost") +
+  theme_minimal()
+```
+###The multi-scatterplot 
+###1.	 The first plot shows the relationship between the "Profit" and "Sales" variables.
+###2.	The second plot displays the relationship between the "Sales" and "Shipping.Cost" variables.
+###3.	The third plot illustrates the relationship between the "Profit" and "Shipping.Cost" variables.
+###Each plot includes points representing the data and is formatted with x-axis and y-axis labels, a title, and a minimalistic theme.
+
+
+### Correlation plot
+```{r}
+library(corrplot)
+df_new = df[,c(7,9,10,11)]
+M<-cor(df_new)
+corrplot(M, method="number",col = "black",tl.col = 'black')
+```
+###The corrplot function displays correlation values visually, making it easier to understand and identify strong or weak correlations between variables. The corrplot function was used to build a correlation matrix plot for the df_new dataframe, which only includes certain columns.
+##Sales has high correlation with Profit and Shipping cost and weak with Discount
+##Discount has high correlation with Profit and weak with Shipping cost
+##Profit has high correlation with Shipping cost
+
+
+### Outliers
+```{r}
+my_data <- df[,c(7,9,10,11,12)]
+par(mfrow = c(2,2),cex = 0.5)
+ for (i in 1:(ncol(my_data) - 1)) {
+  boxplot(my_data[, i] ~ my_data[, ncol(my_data)], 
+          main = paste("Boxplot of", names(my_data)[i], "by", names(my_data)[ncol(my_data)]),
+          xlab = names(my_data)[ncol(my_data)], ylab = names(my_data)[i])
+} 
+```
+##the box plots offer valuable insights into the distribution of variables within different groups and help identify any potential differences or patterns. Further analysis and statistical tests can be conducted to investigate these findings in more depth.
+
+
+### Principal Component Analysis
+```{r}
+library(FactoMineR)
+pca <- PCA(df[,c(7,9,10,11)])
+```
+
+
+```{r}
+pca <- prcomp(df[,c(7,9,10,11)], scale = TRUE)
+# extract loadings
+loadings <- pca$rotation
+# print loadings for the first two PCs
+print(loadings[, 1:2])
+
+```
+
+
+```{r}
+library(factoextra)
+var <- get_pca_var(pca)
+fviz_pca_var(pca, col.var="contrib",
+gradient.cols = c("black","black","black","black"),ggrepel = TRUE ) + labs( title = "PCA Variable Variance")
+```
+#### feature selection using step wise logistic regression as the prediction model is of classification
+
+```{r}
+loadings[,c(1:2)]
+```
+###PC1 (Principal Component 1):
+
+###Sales has a negative coefficient (-0.6106), indicating an inverse relationship with PC1. As PC1 increases, Sales tends to decrease.
+###Discount has a positive coefficient (0.2222), suggesting a positive relationship with PC1. As PC1 increases, Discount tends to increase.
+###Profit has a negative coefficient (-0.4961), indicating an inverse relationship with PC1. As PC1 increases, Profit tends to decrease.
+###Shipping.Cost has a negative coefficient (-0.5760), suggesting an inverse relationship with PC1. As PC1 increases, Shipping.Cost tends to decrease.
+###Overall, PC1 can be interpreted as a component that captures the variation in the data related to a decrease in Sales, decrease in Profit, decrease in Shipping.Cost, and increase in Discount.
+
+###PC2 (Principal Component 2):
+
+###Sales has a positive coefficient (0.2673), suggesting a positive relationship with PC2. As PC2 increases, Sales tends to increase.
+###Discount has a positive coefficient (0.8442), indicating a strong positive relationship with PC2. As PC2 increases, Discount tends to increase.
+###Profit has a negative coefficient (-0.3303), indicating an inverse relationship with PC2. As PC2 increases, Profit tends to decrease.
+###Shipping.Cost has a positive coefficient (0.3268), suggesting a positive relationship with PC2. As PC2 increases, Shipping.Cost tends to increase.
+
+###PC2 can be interpreted as a component capturing the variation in the data related to an increase in Sales, increase in Discount, decrease in Profit, and increase in Shipping.Cost.
+
+
+
+
+### Pairs plot
+```{r}
+library(psych)
+pairs.panels(df[,c(7,9,10,11)], 
+             method = "pearson", # correlation method
+             hist.col = "black",
+             density = TRUE,  # show density plots
+             ellipses = TRUE # show correlation ellipses
+             )
+```
+###Each cell in the scatterplot matrix will contain a scatterplot of two variables, and the correlation coefficient will be displayed within each cell or represented by an ellipse. The diagonal panels will show histograms or density plots of individual variables.
+
+
+
+```{r}
+library(fastDummies)
+
+df = df %>% mutate(
+   Order.Priority = case_when(
+      Order.Priority == "Low" ~ 0,
+      Order.Priority == "Medium" ~ 1,
+      Order.Priority == "High" ~ 2,
+      Order.Priority == "Critical" ~ 3,
+      TRUE                      ~ 5
+     )
+   )
+
+
+df = dummy_columns(df,select_columns = c("Ship.Mode","Segment","Category","Sub.Category","Quantity"),remove_selected_columns = TRUE)
+
+```
+###Converting Categorical variables to numerical variables for the feature selection
+###Just be aware that this conversion will change the categorical variables into numerical variables by creating dummy variables
+```{r}
+library(caret)
+Norm_model <- preProcess(df, method = c("center", "scale"))
+data_1 <-predict(Norm_model,df)
+head(data_1)
+```
+
+### Linear Regression
+```{r}
+model <- lm(Order.Priority ~., data = data_1)
+summary(model)
+```
+
+###The lm() function was used to fit a linear regression model to the data. This model predicts the Order.Priority variable using various predictor variables, such as market, region, sales, discount, profit, shipping cost, ship mode, segment, category, subcategory, and quantity.
+###The linear regression model found that several predictor variables have a significant impact on the Order.Priority variable.
+###Variables with low p-values (e.g., < 0.05) are typically considered statistically significant and may be useful for predicting the response variable. On the other hand, variables with high p-values (e.g., > 0.05) are usually not statistically significant and may not contribute much to the model.
+###The F-statistic tests the overall significance of the linear regression model. It assesses whether there is a significant linear relationship between the predictor variables and the Order.Priority variable.
+###The associated p-value (p-value: < 2.2e-16) is extremely small, indicating strong evidence against the null hypothesis of no relationship between the predictor variables and Order.Priority.
+### variables that appear to be statistically significant:
+###MarketAPAC, RegionCaribbean, RegionCentral Asia, RegionNorth Asia, RegionOceania, RegionSouth, Sales, Shipping.Cost, Ship.Mode_First Class, Ship.Mode_Same Day, Ship.Mode_Second Class, Segment_Consumer, Category_Furniture, Sub.Category_Furnishings, Sub.Category_Bookcases
+
+### Anova
+```{r}
+anova_results<- aov(Order.Priority ~ ., data = data_1)
+summary(anova_results)
+```
+###The ANOVA table displays the significance levels (p-values) and statistics for each predictor variable. The p-values can be used to assess which predictors have a significant impact on the Order.Priority variable.
+###The  smaller p-values (typically below a pre-defined significance level, such as 0.05) are considered statistically significant.
+###These factors that are marked *** can be selected for feature selection.
+###factors with larger p-values (> 0.05) are considered non-significant and may be removed from the model during the feature selection process.
+###Market, Region, Shipping.Cost, Ship.Mode_First Class, Ship.Mode_Same Day, Ship.Mode_Second Class, Segment_Consumer, Category_Furniture, Category_Office Supplies, Sub.Category_Accessories, Sub.Category_Chairs, Sub.Category_Furnishings, Sub.Category_Paper, Quantity_2, Quantity_3
+
+
+
+### Step Wise Regression
+```{r}
+train.control <- trainControl(method = "cv", number = 15)
+# Train the model
+step.model <- train(Order.Priority ~ ., data = data_1,
+                    method = "leapBackward", 
+                    tuneGrid = data.frame(nvmax = 1:5),
+                    trControl = train.control
+                    )
+```
+##backward stepwise regression with cross-validation to train a model for predicting Order.Priority based on the variables in the data_1 dataset.
+
+```{r}
+step.model$results
+```
+### obtain insights into which variables were included in the final model, their respective coefficients, and an assessment of the model's fit or predictive performance.
+
+```{r}
+summary(step.model$finalModel)
+```
+###"Forced in" indicates whether a variable was forced to be included in the model. If it is marked as "TRUE", it means the variable was included in the model regardless of the stepwise regression process. If it is marked as "FALSE", the variable was selected based on the stepwise regression algorithm.
+
+###"Forced out" indicates whether a variable was forced to be excluded from the model. If it is marked as "TRUE", it means the variable was excluded from the model regardless of the stepwise regression process. If it is marked as "FALSE", the variable was selected based on the stepwise regression algorithm.
+
+### there are a total of 63 variables, including an intercept term. For each variable, "FALSE" is indicated for both "Forced in" and "Forced out", which means all variables were selected through the stepwise regression process without any forced inclusions or exclusions.
+
+###(” “) means the variable of no use in feature selection where as (”“) means the variable *as part of feature selection activity.
+###It is useful as part of feature selection activity
+
+```{r}
+library(tidyverse)
+library(ggplot2)
+
+# Read the dataset
+data_1 <- read.csv("C:/Users/vamsh/Downloads/superstore_dataset2011-2015.csv")
+
+# Check the levels of Order.Priority
+order_priority_levels <- levels(data_1$Order.Priority)
+
+# Check if Order.Priority has at least two levels
+if (length(order_priority_levels) < 2) {
+  data_1$Order.Priority <- ifelse(data_1$Order.Priority == "", "Other", data_1$Order.Priority)
+}
+
+# Create a bar plot of Order.Priority
+data_1 %>%
+  ggplot(aes(x = Order.Priority)) +
+  geom_bar() +
+  labs(title = "Order Priority Distribution") +
+  scale_x_discrete(labels = c("Low", "Medium", "High", "Critical", "Other"))
+```
+###To draw more specific conclusions or analyze the distribution in more detail.
+```{r}
+# Convert Order.Priority to binary variable
+df$Order.Priority.Binary <- ifelse(df$Order.Priority >= 2, 1, 0)
+```
+```{r}
+write.csv(df,"Superstore_Data1.csv", row.names = F)
+```
+
